@@ -74,9 +74,8 @@ class WorkspacesService {
   defaultInserted = false
 
   constructor() {
-    if (/github\.io/.test(window.location.hostname)) {
-      this.urlStrategy = 'hash'
-    }
+    // liquidation-terminal: aggr is embedded under /aggr/, so path-based workspace ids would read "aggr"
+    this.urlStrategy = 'hash'
 
     this.latestDatabaseVersion = Math.max.apply(
       null,
@@ -301,6 +300,10 @@ class WorkspacesService {
     if (urlWorkspaceId) {
       // try get workspace from id in the url
       workspace = await this.getWorkspace(urlWorkspaceId)
+
+      if (!workspace) {
+        workspace = await this.seedWorkspace(urlWorkspaceId)
+      }
     }
 
     if (!workspace && lastWorkspaceId) {
@@ -309,14 +312,6 @@ class WorkspacesService {
     }
 
     if (!workspace) {
-      if (
-        localStorage.getItem('settings') &&
-        /aggr.trade$/.test(window.location.hostname) &&
-        !notificationService.hasDismissed('legacy-redirection-notice')
-      ) {
-        this.showLegacyNotice()
-      }
-
       // create workspace, name it from url (or generate one)
       workspace = await this.createWorkspace(urlWorkspaceId)
 
@@ -336,6 +331,77 @@ class WorkspacesService {
     }
 
     return workspace
+  }
+
+  /**
+   * liquidation-terminal: on first run, load a bundled workspace export from
+   * public/workspaces/<id>.json so the embedded aggr opens with the user's layout.
+   */
+  async seedWorkspace(id: string): Promise<Workspace> {
+    try {
+      const seed = await this.fetchSeed(id)
+
+      if (!seed) {
+        return
+      }
+
+      await this.db.add('workspaces', seed)
+
+      return this.getWorkspace(id)
+    } catch (error) {
+      console.error('[workspaces] failed to seed workspace', id, error)
+    }
+  }
+
+  async fetchSeed(id: string): Promise<Workspace> {
+    const response = await fetch(
+      `${import.meta.env.BASE_URL}workspaces/${encodeURIComponent(id)}.json`,
+      { cache: 'no-store' }
+    )
+
+    if (!response.ok) {
+      return
+    }
+
+    const seed = await response.json()
+
+    if (seed.id !== id || !seed.states) {
+      return
+    }
+
+    return seed
+  }
+
+  /** Name of the bundled seed for the workspace in the url, if there is one */
+  get seedWorkspaceId(): string {
+    return location.hash.substring(1) || null
+  }
+
+  /**
+   * liquidation-terminal: overwrite the current workspace with its bundled seed
+   * (the user's original aggr.trade.json) and reload.
+   */
+  async resetWorkspaceToSeed() {
+    const id = this.seedWorkspaceId || this.workspace?.id
+    const seed = id && (await this.fetchSeed(id))
+
+    if (!seed) {
+      throw new Error(`No bundled default for workspace "${id}"`)
+    }
+
+    // saveState() refuses to write without a current workspace, so pending
+    // debounced saves can't write the old state back over the seed
+    this.workspace = null
+
+    await this.db.put('workspaces', seed)
+    localStorage.setItem('workspace', seed.id)
+
+    // tell the embedding dashboard so it resets its symbol selection too
+    if (window.parent !== window) {
+      window.parent.postMessage(JSON.stringify({ op: 'reset' }), '*')
+    }
+
+    window.location.reload()
   }
 
   async setCurrentWorkspace(workspace: Workspace) {
@@ -857,23 +923,6 @@ class WorkspacesService {
     downloadAnything(blob, 'aggr-' + workspaces.join('-'))
   }
 
-  async showLegacyNotice() {
-    const stay = await dialogService.confirm({
-      title: 'Update notice',
-      message: `Welcome to aggr.trade ${
-        import.meta.env.VITE_APP_VERSION
-      }.<br>We are replacing the old version with the new on the main app.<br><br>If for some reasons you don't like it,<br>legacy app can still be found on <a href="https://legacy.aggr.trade">legacy.aggr.trade</a> ☺️`,
-      ok: 'Stay ',
-      cancel: 'Go back',
-      html: true
-    })
-
-    if (stay === false) {
-      window.location.href = 'https://legacy.aggr.trade/'
-    } else if (stay === true) {
-      notificationService.dismiss('legacy-redirection-notice')
-    }
-  }
 }
 
 export default new WorkspacesService()

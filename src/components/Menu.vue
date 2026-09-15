@@ -99,16 +99,6 @@
           </div>
           <i class="icon-plus" />
         </button>
-        <button
-          class="dropdown-item dropdown-item--space-between"
-          @click="addPane('alerts')"
-        >
-          <div>
-            <div>Alerts</div>
-            <div class="dropdown-item__subtitle">Manage alerts</div>
-          </div>
-          <i class="icon-plus" />
-        </button>
       </dropdown>
 
       <dropdown
@@ -170,12 +160,21 @@
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
       </button>
+      <button
+        type="button"
+        class="dropdown-item dropdown-item--space-between"
+        @click="resetToDefault"
+      >
+        <span class="mr4">Reset to default</span>
+        <i class="icon-refresh"></i>
+      </button>
     </dropdown>
   </div>
 </template>
 
 <script lang="ts">
 import dialogService from '@/services/dialogService'
+import workspacesService from '@/services/workspacesService'
 import { PaneType } from '@/store/panes'
 import { Component, Vue } from 'vue-property-decorator'
 import { isTouchSupported } from '../utils/touchevent'
@@ -319,6 +318,23 @@ export default class Menu extends Vue {
 
   toggleAudio() {
     this.$store.commit('settings/TOGGLE_AUDIO', !this.useAudio)
+  }
+
+  // liquidation-terminal: restore the bundled workspace (the user's aggr.trade.json)
+  async resetToDefault() {
+    if (
+      !(await dialogService.confirm({
+        title: 'Reset to default',
+        message:
+          'Panes, markets, indicators and settings of this workspace will go back to the bundled default.',
+        ok: 'Reset & reload',
+        cancel: 'Cancel'
+      }))
+    ) {
+      return
+    }
+
+    await workspacesService.resetWorkspaceToSeed()
   }
 }
 </script>

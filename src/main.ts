@@ -1,6 +1,12 @@
 import Vue from 'vue'
 import App from './App.vue'
 import VueTippy, { TippyComponent } from 'vue-tippy'
+// liquidation-terminal: fonts bundled instead of loaded from Google Fonts
+import '@fontsource/barlow-semi-condensed/400.css'
+import '@fontsource/barlow-semi-condensed/700.css'
+import '@fontsource/spline-sans-mono/400.css'
+import '@fontsource/spline-sans-mono/500.css'
+import '@fontsource/spline-sans-mono/600.css'
 import './assets/sass/app.scss'
 import store from './store'
 

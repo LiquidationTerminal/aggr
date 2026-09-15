@@ -1,5 +1,8 @@
 import Exchange from '../exchange'
 
+// liquidation-terminal: anything older than this in liquidation-orders is a subscribe-time replay
+const OKX_LIQUIDATION_MAX_AGE = 60 * 1000
+
 export default class OKEX extends Exchange {
   id = 'OKEX'
   private specs: { [pair: string]: number }
@@ -132,10 +135,16 @@ export default class OKEX extends Exchange {
       })
     )
 
-    if (this.types[pair] !== 'SPOT') {
+    if (
+      this.types[pair] !== 'SPOT' &&
+      // liquidation-orders is per instType, not per pair: keep it while any pair of that type is connected
+      !api._connected.some(
+        connected => connected !== pair && this.types[connected] === this.types[pair]
+      )
+    ) {
       api.send(
         JSON.stringify({
-          op: 'subscribe',
+          op: 'unsubscribe',
           args: [
             {
               channel: 'liquidation-orders',
@@ -170,7 +179,7 @@ export default class OKEX extends Exchange {
     }
   }
 
-  formatLiquidation(liquidation, pair) {
+  formatLiquidation(liquidation, pair): any {
     const size =
       (liquidation.sz * this.specs[pair]) /
       (this.inversed[pair] ? liquidation.bkPx : 1)
@@ -194,20 +203,27 @@ export default class OKEX extends Exchange {
     }
 
     if (json.arg.channel === 'liquidation-orders') {
-      return this.emitLiquidations(
-        api.id,
-        json.data.reduce((acc, pairData) => {
-          if (api._connected.indexOf(pairData.instId) === -1) {
-            return acc
-          }
+      // OKX replays recent liquidations on every subscribe; those show up as "56m ago" rows
+      const oldest = Date.now() - OKX_LIQUIDATION_MAX_AGE
+      const liquidations = json.data.reduce((acc, pairData) => {
+        if (api._connected.indexOf(pairData.instId) === -1) {
+          return acc
+        }
 
-          return acc.concat(
-            pairData.details.map(liquidation =>
+        return acc.concat(
+          pairData.details
+            .filter(liquidation => +liquidation.ts >= oldest)
+            .map(liquidation =>
               this.formatLiquidation(liquidation, pairData.instId)
             )
-          )
-        }, [])
-      )
+        )
+      }, [])
+
+      if (liquidations.length) {
+        this.emitLiquidations(api.id, liquidations)
+      }
+
+      return
     }
 
     return this.emitTrades(

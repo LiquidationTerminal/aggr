@@ -50,7 +50,8 @@ export default class PreviewMixin extends Vue {
     }
 
     if (!json.preview) {
-      if (json.imagePath) {
+      // liquidation-terminal: no community library host, so library preview images can't be fetched
+      if (json.imagePath && import.meta.env.VITE_APP_LIB_URL) {
         json.preview = await fetch(
           `${import.meta.env.VITE_APP_LIB_URL}${json.imagePath}`
         ).then(response => {

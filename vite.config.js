@@ -27,8 +27,8 @@ process.env.VITE_APP_BUILD_DATE =
   ' ' +
   date.toLocaleString('en-US', { month: 'short' }).toLowerCase()
 
+// liquidation-terminal: 'AGGR' (sentiment.aggr.trade pseudo-exchange) removed
 process.env.VITE_APP_EXCHANGES = [
-  'AGGR',
   'ASTER',
   'BITMEX',
   'BINANCE_FUTURES',

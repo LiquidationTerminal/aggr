@@ -93,50 +93,11 @@ class GifsService {
     return this.promisesOfGifs[keyword]
   }
 
+  // liquidation-terminal: Giphy lookups removed (no requests to api.giphy.com)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async fetchGifByKeyword(keyword: string, showNotice?: boolean) {
-    if (!keyword) {
-      return
-    }
-
-    const slug = slugify(keyword)
-
-    return fetch(
-      'https://api.giphy.com/v1/gifs/search?q=' +
-        keyword +
-        '&rating=r&limit=100&api_key=b5Y5CZcpj9spa0xEfskQxGGnhChYt3hi'
-    )
-      .then(res => res.json())
-      .then(async res => {
-        if (!res.data || !res.data.length) {
-          return
-        }
-
-        this.cache[keyword] = []
-
-        for (const item of res.data) {
-          this.cache[keyword].push(item.images.downsized.url)
-        }
-
-        if (showNotice) {
-          store.dispatch('app/showNotice', {
-            title:
-              'Fetched ' + this.cache[keyword].length + ' ' + keyword + ' gifs',
-            type: 'success'
-          })
-        }
-
-        await workspacesService.saveGifs({
-          slug,
-          keyword: keyword,
-          timestamp: Date.now(),
-          data: this.cache[keyword]
-        })
-
-        return this.cache[keyword]
-      })
-      .finally(() => {
-        delete this.promisesOfGifs[keyword]
-      })
+    delete this.promisesOfGifs[keyword]
+    return undefined
   }
 }
 

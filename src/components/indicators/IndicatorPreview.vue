@@ -59,7 +59,8 @@ export default {
         return this.imageObjectUrl
       }
 
-      if (this.path) {
+      // liquidation-terminal: library images only exist on the (removed) community library host
+      if (this.path && import.meta.env.VITE_APP_LIB_URL) {
         return `${import.meta.env.VITE_APP_LIB_URL}${this.path}`
       }
 

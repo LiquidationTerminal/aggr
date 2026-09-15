@@ -365,10 +365,6 @@
         }}</sup>
       </a>
       <span>
-        <dono-dropdown class="-top -text-left" />
-      </span>
-      <i class="settings-footer__divider -center mr4">|</i>
-      <span>
         <button
           type="button"
           class="btn -text -arrow settings-footer__button"
@@ -396,7 +392,6 @@ import { ago, browseFile } from '../../utils/helpers'
 
 import Dialog from '@/components/framework/Dialog.vue'
 import Exchange from './Exchange.vue'
-import DonoDropdown from './DonoDropdown.vue'
 import dialogService from '../../services/dialogService'
 import AudioSettings from './AudioSettings.vue'
 import OtherSettings from './OtherSettings.vue'
@@ -417,7 +412,6 @@ export default {
     Exchange,
     AudioSettings,
     OtherSettings,
-    DonoDropdown,
     ColorPickerControl,
     ToggableSection
   },

@@ -230,6 +230,11 @@ export default {
       return null
     },
     authorUrl() {
+      // liquidation-terminal: community library repo link removed
+      if (!import.meta.env.VITE_APP_LIB_REPO_URL) {
+        return null
+      }
+
       return `${import.meta.env.VITE_APP_LIB_REPO_URL}/tree/main/indicators/${
         this.indicator.author
       }`
@@ -314,7 +319,8 @@ export default {
       }
     },
     async fetchIndicatorVersions() {
-      if (this.indicator.versions) {
+      // liquidation-terminal: versions come from the removed community library host
+      if (this.indicator.versions || !import.meta.env.VITE_APP_LIB_URL) {
         return
       }
 
