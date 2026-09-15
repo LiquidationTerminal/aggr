@@ -105,6 +105,12 @@ class IframeService {
         case 'openSettings':
           this.openSettings()
           break
+        case 'resumeAudio':
+          // liquidation-terminal: the parent forwards its first user gesture. With
+          // allow="autoplay" on the frame that activation lets this frame resume audio too;
+          // audioService retries on focus, so replay a focus to run its normal resume flow.
+          window.dispatchEvent(new Event('focus'))
+          break
       }
     })
   }
