@@ -76,9 +76,12 @@ export default defineConfig(({ mode }) => {
     }, {})
   }
 
+  // liquidation-terminal: this used to hash the constant string 'aggr', so every build
+  // produced the same file names and browsers kept serving the previous bundle from cache.
+  // Hash the build time instead, so each build gets fresh names.
   const hash = crypto
     .createHash('md5')
-    .update('aggr')
+    .update(`aggr-${process.env.AGGR_BUILD_ID || Date.now()}`)
     .digest('hex')
     .substring(0, 7)
 

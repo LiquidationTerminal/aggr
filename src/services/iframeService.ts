@@ -208,6 +208,10 @@ class IframeService {
         case 'importWorkspace':
           workspacesService.addAndSetWorkspace(json.data)
           break
+        case 'resetWorkspace':
+          // liquidation-terminal: part of the embedding app's "reset everything"
+          workspacesService.resetWorkspaceToSeed()
+          break
         case 'setAudio':
           // liquidation-terminal: the embedding page owns the audio control, including its
           // global mute. setAudioVolume also flips useAudio, so volume 0 turns sound off.

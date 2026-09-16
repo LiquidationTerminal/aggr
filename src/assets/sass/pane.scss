@@ -212,17 +212,19 @@
   display: none;
   position: absolute;
   z-index: 3;
-  top: 1.5em;
+  // liquidation-terminal: the header no longer holds timeframe buttons, so the overlay
+  // starts at the very top of the chart instead of one line below it
+  top: 0;
   left: 0;
   bottom: 0;
-  margin-top: 0.25em;
+  margin-top: 0;
   margin-left: 0.25em;
   flex-direction: column;
   justify-content: flex-start;
   pointer-events: none;
 
   .pane.-small & {
-    top: 1.429em;
+    top: 0;
     margin-top: 0;
     margin-left: 0;
   }
