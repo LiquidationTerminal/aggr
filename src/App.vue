@@ -13,8 +13,7 @@
     <Loader v-if="isLoading" />
     <Notices />
     <div class="app__wrapper">
-      <Menu />
-
+      <!-- liquidation-terminal: the embedding app provides the menu, so aggr shows none -->
       <div class="app__layout">
         <Panes />
       </div>
@@ -40,8 +39,6 @@ import aggregatorService from './services/aggregatorService'
 
 import Loader from '@/components/framework/Loader.vue'
 import Notices from '@/components/framework/Notices.vue'
-import Menu from '@/components/Menu.vue'
-
 import Panes from '@/components/panes/Panes.vue'
 
 import upFavicon from '@/assets/up.png'
@@ -58,7 +55,6 @@ import { pathToBase64 } from './utils/helpers'
 @Component({
   name: 'App',
   components: {
-    Menu,
     Notices,
     Panes,
     Loader
@@ -233,13 +229,12 @@ export default class App extends Vue {
 
     event = event || (window.event as any)
 
+    // liquidation-terminal: digits used to open the timeframe dialog; the embedding app owns that now
     if (/^[a-z]$/i.test(event.key)) {
       this.$store.dispatch('app/showSearch', {
         pristine: true,
         input: event.key
       })
-    } else if (/^[0-9]$/i.test(event.key)) {
-      this.$store.dispatch('app/showTimeframe')
     }
   }
 

@@ -5,6 +5,7 @@ import {
   stripStableQuote
 } from '@/services/productsService'
 import store from '@/store'
+import workspacesService from '@/services/workspacesService'
 import { INFRAME } from '@/utils/constants'
 import { subscribeOnce } from '../utils/store'
 
@@ -72,7 +73,73 @@ class IframeService {
   async initialize() {
     await subscribeOnce('app/SET_BOOTED')
     this.listen()
-    this.send('ready')
+    // liquidation-terminal: hand the current audio level and timeframe over so the parent's controls start in sync
+    this.send('ready', {
+      audioVolume: store.state.settings.useAudio
+        ? store.state.settings.audioVolume
+        : 0,
+      timeframe: this.chartTimeframe()
+    })
+  }
+
+  /**
+   * liquidation-terminal: the global settings the embedding app renders in its own widget
+   * popover, plus which exchanges are connected.
+   */
+  globalSettings() {
+    const settings = store.state.settings
+    const exchanges = (
+      store.getters['exchanges/getExchanges'] as string[]
+    ).map(id => ({ id, disabled: !!store.state.exchanges[id].disabled }))
+
+    return {
+      exchanges,
+      settings: {
+        preferQuoteCurrencySize: settings.preferQuoteCurrencySize,
+        aggregationLength: settings.aggregationLength,
+        calculateSlippage: settings.calculateSlippage,
+        disableAnimations: settings.disableAnimations,
+        autoHideHeaders: settings.autoHideHeaders,
+        autoHideNames: settings.autoHideNames,
+        normalizeWatermarks: settings.normalizeWatermarks,
+        showThresholdsAsTable: settings.showThresholdsAsTable,
+        timezoneOffset: settings.timezoneOffset,
+        backgroundColor: settings.backgroundColor,
+        textColor: settings.textColor,
+        buyColor: settings.buyColor,
+        sellColor: settings.sellColor,
+        audioVolume: settings.useAudio ? settings.audioVolume : 0,
+        audioFilters: settings.audioFilters
+      }
+    }
+  }
+
+  /** liquidation-terminal: timeframe of the first chart pane, which the parent's control mirrors */
+  chartTimeframe() {
+    for (const paneId in store.state.panes.panes) {
+      if (store.state.panes.panes[paneId].type === 'chart') {
+        return store.state[paneId]?.timeframe
+      }
+    }
+
+    return null
+  }
+
+  /** liquidation-terminal: hand the whole workspace over so the embedding app can back it up */
+  async exportWorkspace() {
+    const workspace = await workspacesService.getWorkspace()
+
+    if (!workspace) {
+      return
+    }
+
+    const copy = JSON.parse(JSON.stringify(workspace))
+
+    if (copy.states && copy.states.panes) {
+      delete copy.states.panes.marketsListeners
+    }
+
+    this.send('workspace', copy)
   }
 
   listen() {
@@ -104,6 +171,47 @@ class IframeService {
           break
         case 'openSettings':
           this.openSettings()
+          break
+        case 'getSettings':
+          this.send('settings', this.globalSettings())
+          break
+        case 'setSetting':
+          // liquidation-terminal: the embedding app renders aggr's global settings in its own
+          // UI and drives them through the store's own mutations.
+          store.commit(`settings/${json.data.mutation}`, json.data.value)
+          this.send('settings', this.globalSettings())
+          break
+        case 'setColor':
+          store.dispatch('settings/setColor', {
+            type: json.data.type,
+            value: json.data.value
+          })
+          this.send('settings', this.globalSettings())
+          break
+        case 'toggleExchange':
+          store.dispatch('exchanges/toggleExchange', json.data.id).then(() => {
+            this.send('settings', this.globalSettings())
+          })
+          break
+        case 'setTimeframe':
+          // liquidation-terminal: the embedding app owns the timeframe control. Commit the
+          // mutation directly; the action reads window.event for its shift-key shortcut.
+          for (const paneId in store.state.panes.panes) {
+            if (store.state.panes.panes[paneId].type === 'chart') {
+              store.commit(`${paneId}/SET_TIMEFRAME`, json.data?.timeframe)
+            }
+          }
+          break
+        case 'exportWorkspace':
+          this.exportWorkspace()
+          break
+        case 'importWorkspace':
+          workspacesService.addAndSetWorkspace(json.data)
+          break
+        case 'setAudio':
+          // liquidation-terminal: the embedding page owns the audio control, including its
+          // global mute. setAudioVolume also flips useAudio, so volume 0 turns sound off.
+          store.dispatch('settings/setAudioVolume', Number(json.data?.volume) || 0)
           break
         case 'resumeAudio':
           // liquidation-terminal: the parent forwards its first user gesture. With

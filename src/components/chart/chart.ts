@@ -2846,10 +2846,6 @@ export default class Chart {
     document.body.removeChild(chartElement)
   }
 
-  toggleTimeframeDropdown(event) {
-    return this.chartControl.toggleTimeframeDropdown(event)
-  }
-
   getAxisSize() {
     const chartOptions = store.state[this.paneId] as ChartPaneState
 

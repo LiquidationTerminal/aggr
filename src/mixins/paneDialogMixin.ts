@@ -1,6 +1,5 @@
-import dialogService from '@/services/dialogService'
-import { parseMarket } from '@/services/productsService'
 import workspacesService from '@/services/workspacesService'
+import { fixedPaneName } from '@/utils/paneNames'
 import { Pane } from '@/store/panes'
 import panesSettings from '@/store/panesSettings'
 import { Preset } from '@/types/types'
@@ -22,36 +21,12 @@ export default class PaneDialogMixin extends Vue {
     return this.$store.state.panes.panes[this.paneId]
   }
 
+  // liquidation-terminal: pane names are fixed, so dialogs only read them
   get name() {
-    const name = this.$store.state.panes.panes[this.paneId].name
-
-    if (!name) {
-      if (!name && this.$store.state.panes.panes[this.paneId].markets.length) {
-        const [, pair] = parseMarket(
-          this.$store.state.panes.panes[this.paneId].markets[0]
-        )
-        return pair + ' - ' + this.$store.state.panes.panes[this.paneId].type
-      } else {
-        return this.paneId
-      }
-    }
-
-    return name
-  }
-
-  set name(value: string) {
-    this.$store.commit('panes/SET_PANE_NAME', { id: this.paneId, name: value })
-  }
-
-  async renamePane() {
-    const name = await dialogService.prompt({
-      action: 'Rename',
-      input: this.name
-    })
-
-    if (name !== null && name !== this.name) {
-      this.name = name
-    }
+    return fixedPaneName(
+      this.paneId,
+      this.$store.state.panes.panes[this.paneId].type
+    )
   }
 
   async resetPane(preset?: Preset) {

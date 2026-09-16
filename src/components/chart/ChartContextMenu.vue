@@ -1,11 +1,6 @@
 <template>
   <dropdown v-model="value">
-    <button
-      @click="$emit('cmd', ['toggleTimeframeDropdown', $event])"
-      class="dropdown-item -arrow"
-    >
-      {{ timeframeForHuman }}
-    </button>
+    <!-- liquidation-terminal: the embedding app owns the timeframe control -->
     <button @click="$store.dispatch('app/showSearch')" class="dropdown-item">
       <i class="icon-search"></i>
       <span>Search</span>

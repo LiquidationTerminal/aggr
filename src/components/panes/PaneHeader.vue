@@ -9,15 +9,9 @@
       class="btn -cases pane-header__highlight"
       @dblclick="maximizePane"
     >
+      <!-- liquidation-terminal: pane names are fixed, so there is no rename control -->
       <slot name="title">
         {{ name }}
-        <btn
-          type="button"
-          @click="renamePane"
-          class="pane-header__edit btn -text -small"
-        >
-          <i class="icon-edit"></i>
-        </btn>
       </slot>
     </div>
     <slot>
@@ -123,10 +117,6 @@
         <i class="icon-download"></i>
         <span>Download</span>
       </button>
-      <button type="button" class="dropdown-item" @click="renamePane">
-        <i class="icon-edit"></i>
-        <span>Rename</span>
-      </button>
       <button type="button" class="dropdown-item" @click="removePane">
         <i class="icon-trash"></i>
         <span>Remove</span>
@@ -138,6 +128,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { fixedPaneName } from '@/utils/paneNames'
 
 import Btn from '@/components/framework/Btn.vue'
 import { downloadAnything, getSiblings, slugify } from '@/utils/helpers'
@@ -177,19 +168,9 @@ export default class PaneHeader extends Vue {
   }
 
   get name() {
-    const name = this.$store.state.panes.panes[this.paneId].name
-    const market =
-      this.$store.state.panes.marketsListeners[
-        this.$store.state.panes.panes[this.paneId].markets[0]
-      ]
-
-    if (name) {
-      return name.trim()
-    } else if (market) {
-      return market.local
-    } else {
-      return this.type
-    }
+    // liquidation-terminal: pane titles are fixed. The chart shows its symbol in the
+    // embedding app's header instead, so it carries no title of its own.
+    return fixedPaneName(this.paneId, this.type)
   }
 
   openSearch() {
@@ -247,22 +228,6 @@ export default class PaneHeader extends Vue {
       id: this.paneId,
       zoom: isMaximized ? this.zoom * 1.5 : this.zoom * (2 / 3)
     })
-  }
-
-  async renamePane(event) {
-    if (event) {
-      event.stopPropagation()
-    }
-
-    const name = await dialogService.prompt({
-      placeholder: `Main pane's market`,
-      action: 'Rename',
-      input: this.name
-    })
-
-    if (typeof name === 'string' && name !== this.name) {
-      this.$store.commit('panes/SET_PANE_NAME', { id: this.paneId, name: name })
-    }
   }
 
   async downloadPane() {

@@ -39,6 +39,8 @@ export interface Pane {
   settings?: any
 }
 
+import { fixedPaneName } from '@/utils/paneNames'
+
 export interface PanesState {
   locked?: boolean
   layout: GridItem[]
@@ -61,18 +63,7 @@ const layoutMobile = [
 const state: PanesState = JSON.parse(JSON.stringify(defaultPanes))
 
 const getters = {
-  getName: state => (id: string) => {
-    const name = state.panes[id].name
-    const market = state.marketsListeners[state.panes[id].markets[0]]
-
-    if (name) {
-      return name.trim()
-    } else if (market) {
-      return market.local
-    } else {
-      return state.panes[id].type
-    }
-  },
+  getName: state => (id: string) => fixedPaneName(id, state.panes[id].type),
   getFocusedPaneId: (state, getters, rootState) => (type: string) => {
     if (
       rootState.app.focusedPaneId &&

@@ -8,7 +8,6 @@ export const controlledCharts: Chart[] = []
 
 export const components: {
   contextMenu?: any
-  timeframeDropdown?: any
 } = {}
 
 export function syncCrosshair(params, originalPaneId = null) {

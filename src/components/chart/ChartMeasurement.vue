@@ -87,14 +87,6 @@ export default {
     }
   },
   methods: {
-    toggleTimeframeDropdown(event) {
-      if (this.timeframeDropdownTrigger) {
-        this.timeframeDropdownTrigger = null
-      } else {
-        this.timeframeDropdownTrigger = event.currentTarget
-      }
-    },
-
     toggleAlertsDropdown(event) {
       if (this.alertsDropdownTrigger) {
         this.alertsDropdownTrigger = null

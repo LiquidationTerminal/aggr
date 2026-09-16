@@ -8,7 +8,6 @@
     <template v-slot:header>
       <div
         class="dialog__title -editable"
-        @dblclick="renamePane"
         v-text="name"
       ></div>
       <div class="column -center"></div>

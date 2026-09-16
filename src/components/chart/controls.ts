@@ -583,28 +583,4 @@ export default class ChartControl {
     }
   }
 
-  async toggleTimeframeDropdown(event) {
-    const propsData = {
-      value: event.currentTarget,
-      paneId: this.chart.paneId
-    }
-
-    if (!components.timeframeDropdown) {
-      const module = await import(`@/components/chart/TimeframeDropdown.vue`)
-      components.timeframeDropdown = createComponent(module.default, propsData)
-
-      mountComponent(components.timeframeDropdown)
-
-      components.timeframeDropdown.$on('input', value => {
-        components.timeframeDropdown.value = value
-      })
-    } else {
-      if (components.timeframeDropdown.value === event.currentTarget) {
-        components.timeframeDropdown.value = null
-      } else {
-        components.timeframeDropdown.paneId = propsData.paneId
-        components.timeframeDropdown.value = propsData.value
-      }
-    }
-  }
 }

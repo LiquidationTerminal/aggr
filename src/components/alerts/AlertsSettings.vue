@@ -1,10 +1,7 @@
 <template>
-  <toggable-group
-    class="alerts-settings"
-    :value="alerts"
-    label="Price alerts"
-    @change="toggleAlerts($event)"
-  >
+  <!-- liquidation-terminal: alerts are always on, so there is no toggle and no
+       browser-notification prompt; only the drawing options remain. -->
+  <div class="alerts-settings">
     <p class="mt0 text-color-50">
       <i class="icon-info"></i> Uses average price of the coin
     </p>
@@ -86,59 +83,27 @@
       </div>
     </div>
 
-    <template #off>
-      <label
-        v-if="notificationsPermissionState === 'denied'"
-        class="text-danger help-text mt0 mb0"
-        v-tippy
-        :title="`${helps['notifications-disabled']} ${helps['notifications-grant']}`"
-      >
-        <i class="icon-warning mr4"></i> Notifications are blocked.
-      </label>
-      <p
-        v-else-if="notificationsPermissionState !== 'granted'"
-        class="text-info help-text mt0 mb0"
-        v-tippy
-        :title="`${helps['notifications-disabled']} ${helps['notifications-grant']}`"
-      >
-        <i class="icon-info mr4"></i> Awaiting browser persmission.
-      </p>
-    </template>
-  </toggable-group>
+  </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
-import ToggableGroup from '@/components/framework/ToggableGroup.vue'
 import ColorPickerControl from '@/components/framework/picker/ColorPickerControl.vue'
 
 import audioService from '@/services/audioService'
 import importService from '@/services/importService'
 
-let notificationsPermission
-
 @Component({
   components: {
     DropdownButton,
-    ToggableGroup,
     ColorPickerControl
   },
   name: 'AlertsSettings'
 })
 export default class AlertsSettings extends Vue {
-  helps = {
-    'notifications-disabled': 'Push notification are disabled.',
-    'notifications-grant': 'Enable notifications for this site in your browser.'
-  }
-  notificationsPermissionState = 'granted'
-
   get alertSound() {
     return this.$store.state.settings.alertSound
-  }
-
-  get alerts() {
-    return this.$store.state.settings.alerts
   }
 
   get alertsColor() {
@@ -172,64 +137,10 @@ export default class AlertsSettings extends Vue {
   }
 
   created() {
-    this.checkNotificationsPermission()
-  }
-
-  checkNotificationsPermission() {
-    navigator.permissions
-      .query({ name: 'notifications' })
-      .then(result => {
-        if (!notificationsPermission) {
-          result.onchange = (event: any) => {
-            this.setNotificationsPermission(event.target.state)
-          }
-
-          notificationsPermission = result
-        }
-
-        this.setNotificationsPermission(result.state)
-      })
-      .catch(err => {
-        console.error(err.message)
-      })
-  }
-
-  setNotificationsPermission(state) {
-    this.notificationsPermissionState = state
-
-    if (this.notificationsPermissionState !== 'granted' && this.alerts) {
-      this.$store.commit('settings/TOGGLE_ALERTS', false)
+    // liquidation-terminal: alerts stay on; browser notifications are never requested
+    if (!this.$store.state.settings.alerts) {
+      this.$store.commit('settings/TOGGLE_ALERTS', true)
     }
-  }
-
-  async toggleAlerts(event) {
-    let checked = event.target.checked
-
-    if (checked) {
-      this.notificationsPermissionState = await Notification.requestPermission()
-    }
-
-    if (this.notificationsPermissionState === 'denied' && checked) {
-      checked = false
-
-      this.$store.dispatch('app/showNotice', {
-        id: 'alert-notifications',
-        type: 'error',
-        icon: 'icon-warning -large pt0',
-        timeout: 100000,
-        html: true,
-        title: `<div class="ml8"><strong>This might not work as expected.</strong><br>${this.helps['notifications-grant']}</div>`
-      })
-    } else {
-      this.$store.dispatch('app/showNotice', {
-        id: 'alert-notifications',
-        type: 'info',
-        title: checked ? `Alerts are enabled` : 'Alerts are disabled'
-      })
-    }
-
-    event.target.checked = checked
-    this.$store.commit('settings/TOGGLE_ALERTS', checked)
   }
 
   async handleAlertSoundFile(event) {

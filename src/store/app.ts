@@ -3,7 +3,6 @@ import { randomString } from '@/utils/helpers'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
-import TimeframeDialog from '../components/TimeframeDialog.vue'
 import { getApiSupportedMarkets } from '../services/productsService'
 
 export interface Notice {
@@ -173,19 +172,6 @@ const actions = {
       (await import('@/components/SearchDialog.vue')).default,
       { paneId, pristine, input }
     )
-  },
-  showTimeframe({ commit, state, rootState }) {
-    if (
-      state.showSearch ||
-      !state.focusedPaneId ||
-      !rootState[state.focusedPaneId]
-    ) {
-      return
-    }
-
-    commit('TOGGLE_SEARCH', true)
-
-    dialogService.open(TimeframeDialog)
   },
   hideSearch({ commit, state }) {
     if (!state.showSearch) {
